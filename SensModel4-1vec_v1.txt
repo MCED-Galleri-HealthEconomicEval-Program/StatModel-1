@@ -1,0 +1,40 @@
+# Galleri sensitivity model
+# Model 4-1: p constrained increasing with stage
+# Constrained normal using "ones trick"
+# exchangeable across Ca types in 'vec1' for stages defined in 'ves1' 
+# assumptions of  common mean and variance across exch stages defined in 'stcm' and 'stcv' 
+model{
+for (j in 1:nCa){
+  for(k in 1:4){
+    s[j,k] ~ dbin(p[j,k],S[j,k])   # likelihood for each Ca and stage
+    logit(p[j,k]) <- mu[j,k]       # model
+    # calculate res deviance
+    shat[j,k] <- p[j,k] * S[j,k]   # expected value of the numerators 
+    dev[j,k] <- 2 * (s[j,k] * (log(s[j,k])-log(shat[j,k])) +  (S[j,k]-s[j,k]) * (log(S[j,k]-s[j,k]) - log(S[j,k]-shat[j,k])))
+   }
+  resdev[j] <- sum(dev[j, ])       # residual deviance contribution for this Ca type     
+  for (k in 2:4){
+  	# "ones trick" to constrain mu's to be increasing
+#	z[j,k] <- 1  # BUGS specification does not work in JAGS - z must be given as data
+	z[j,k] ~ dbern(c[j,k])
+    c[j,k] <- step(mu[j,k]-mu[j,k-1])  # =1 if increasing, =0 o.w.
+	}
+ }
+totresdev <- sum(resdev[])         # Total Residual Deviance
+## model for cancer types
+for (j in vec1){                   # exchangeable cancer types
+  for (k in ves1){ mu[j,k] ~ dnorm(m[k],tau.m[k]) }  # exchangeable across stages
+  for (k in ves2){ mu[j,k] ~ dnorm(0,.0001)  }  # non-exchangeable across stages
+ }
+for (k in 1:4){                    # non-exchangeable cancer types
+  for (j in vecn){ mu[j,k] ~ dnorm(0,.0001) }
+ }
+for (k in 1:4){
+  m[k] <- M[stcm[k]]            # define which stages to share mean across
+  tau.m[k] <- pow(sd.m[k], -2)  # precision of RE distribution
+  sd.m[k] <- SD[stcv[k]]        # define which stages to share SD across
+  } 
+# define priors
+for (k in 1:nm) { M[k] ~ dnorm(0,.0001) } # mean of RE distribution
+for (k in 1:nv) { SD[k] ~ dunif(0,5) }    # SD of RE distribution
+}
