@@ -1,4 +1,4 @@
-# StatModel-1
+# BayesianModelTestSens-1
 Files to support "A Bayesian approach to sharing information on sensitivity of a Multi-Cancer Early Detection test across and within tumour types and stages".
 
 This repository contains data, JAGS and R code, and some additional results supporting work done as part of a comprehensive program of NHS England funded research 
